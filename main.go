@@ -11,21 +11,35 @@ import (
 	"time"
 )
 
+type jiraIssue struct {
+	ID string
+}
+type jiraTimeEntry struct {
+	Issue       jiraIssue
+	Description string
+	From        *time.Time
+	To          *time.Time
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	token_jira := os.Getenv("TOKEN_JIRA")
-	if token_jira == "" {
-		panic("missing TOKEN_JIRA")
-	}
 	token_toggl := os.Getenv("TOKEN_TOGGL")
 	if token_toggl == "" {
 		panic("missing TOKEN_TOGGL")
 	}
 
+	issuesToinsertTojira := getTogglIssues(token_toggl, err)
+
+	for _, issue := range issuesToinsertTojira {
+		fmt.Println(issue)
+	}
+}
+
+func getTogglIssues(token_toggl string, err error) []jiraTimeEntry {
 	authToken := base64.StdEncoding.Strict().EncodeToString([]byte("michondr:" + token_toggl))
 	fmt.Println(authToken)
 
@@ -54,17 +68,8 @@ func main() {
 		PROJECT_FEATURE:     {Name: "feature"},
 	}
 
-	type jiraIssue struct {
-		ID string
-	}
 	scrumIssue := jiraIssue{ID: "REC-3333"} //TODO: what's scrum ID
 
-	type jiraTimeEntry struct {
-		Issue       jiraIssue
-		Description string
-		From        *time.Time
-		To          *time.Time
-	}
 	issuesToinsertTojira := []jiraTimeEntry{}
 
 	for _, entry := range relevantEntries {
@@ -107,8 +112,5 @@ func main() {
 			},
 		)
 	}
-
-	for _, issue := range issuesToinsertTojira {
-		fmt.Println(issue)
-	}
+	return issuesToinsertTojira
 }
