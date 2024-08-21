@@ -5,21 +5,10 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
-	"time"
 )
 
-type jiraIssue struct {
-	ID string
-}
-type jiraTimeEntry struct {
-	Issue       jiraIssue
-	Description string
-	From        *time.Time
-	To          *time.Time
-}
-
 const (
-	jiraScrumId = "REC-3333" //TODO: check it matches
+	jiraScrumId = "REC-3123"
 )
 
 func main() {
@@ -33,9 +22,14 @@ func main() {
 		panic("missing TOKEN_TOGGL")
 	}
 
-	issuesToinsertTojira := getTogglIssuesInJiraFormat(token_toggl, err)
+	togglEntries, err := getTogglEntries(token_toggl)
+	if err != nil {
+		panic("cannot get time entries: " + err.Error())
+	}
 
-	for _, issue := range issuesToinsertTojira {
+	jiraWorklogRecords := parseIssues(togglEntries)
+
+	for _, issue := range jiraWorklogRecords {
 		fmt.Println(issue)
 	}
 }

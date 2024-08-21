@@ -5,17 +5,12 @@ import (
 	"time"
 )
 
-func getTogglIssuesInJiraFormat(token_toggl string, err error) []jiraTimeEntry {
+func getTogglEntries(token_toggl string) ([]toggl.TimeEntry, error) {
 	toggl.EnableLog()
 	session := toggl.OpenSession(token_toggl)
 
 	now := time.Now()
 	lastWorklogDateInJira := getLastWorklogDateInJira()
 
-	relevantEntries, err := session.GetTimeEntries(lastWorklogDateInJira, now)
-	if err != nil {
-		panic("cannot get time entries: " + err.Error())
-	}
-
-	return parseIssues(relevantEntries)
+	return session.GetTimeEntries(lastWorklogDateInJira, now)
 }
