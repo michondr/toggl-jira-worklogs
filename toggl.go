@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func getTogglEntries(token_toggl string) ([]toggl.TimeEntry, error) {
+func getTogglEntries(token_toggl string, date_to_run time.Time) ([]toggl.TimeEntry, error) {
 	toggl.EnableLog()
 	session := toggl.OpenSession(token_toggl)
 
-	now := time.Now()
-	lastWorklogDateInJira := getLastWorklogDateInJira()
+	start := date_to_run.Truncate(24 * time.Hour)
+	end := start.Add(24 * time.Hour)
 
-	return session.GetTimeEntries(lastWorklogDateInJira, now)
+	return session.GetTimeEntries(start, end)
 }
