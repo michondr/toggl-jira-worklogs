@@ -17,21 +17,21 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	token_toggl := os.Getenv("TOGGL_TOKEN")
-	if token_toggl == "" {
+	tokenToggl := os.Getenv("TOGGL_TOKEN")
+	if tokenToggl == "" {
 		panic("missing TOGGL_TOKEN")
 	}
 
-	jira_token := os.Getenv("JIRA_TOKEN")
-	if jira_token == "" {
+	jiraToken := os.Getenv("JIRA_TOKEN")
+	if jiraToken == "" {
 		panic("missing JIRA_TOKEN")
 	}
-	jira_user := os.Getenv("JIRA_USER")
-	if jira_user == "" {
+	jiraUser := os.Getenv("JIRA_USER")
+	if jiraUser == "" {
 		panic("missing JIRA_USER")
 	}
-	jira_url := os.Getenv("JIRA_URL")
-	if jira_url == "" {
+	jiraUrl := os.Getenv("JIRA_URL")
+	if jiraUrl == "" {
 		panic("missing JIRA_URL")
 	}
 
@@ -47,7 +47,7 @@ func main() {
 		panic("cannot go this far back")
 	}
 
-	togglEntries, err := getTogglEntries(token_toggl, forDate)
+	togglEntries, err := getTogglEntries(tokenToggl, forDate)
 	if err != nil {
 		panic("cannot get time entries: " + err.Error())
 	}
@@ -58,7 +58,7 @@ func main() {
 			panic("really, updating something this far would be bad")
 		}
 
-		insertToJiraIfNotExists(entry, jira_user, jira_token, jira_url)
+		insertToJiraIfNotExists(entry, jiraUser, jiraToken, jiraUrl)
 	}
 
 }

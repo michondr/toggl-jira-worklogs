@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-func loginToJira(jira_user, jira_token, jira_url string) *jira.Client {
+func loginToJira(jiraUser, jiraToken, jiraUrl string) *jira.Client {
 	tp := jira.BasicAuthTransport{
-		Username: jira_user,
-		Password: jira_token,
+		Username: jiraUser,
+		Password: jiraToken,
 	}
 
-	client, err := jira.NewClient(tp.Client(), jira_url)
+	client, err := jira.NewClient(tp.Client(), jiraUrl)
 	if err != nil {
 		fmt.Printf("\nerror client: %v\n", err)
 		return nil
@@ -21,8 +21,8 @@ func loginToJira(jira_user, jira_token, jira_url string) *jira.Client {
 	return client
 }
 
-func insertToJiraIfNotExists(record jira.WorklogRecord, jira_user, jira_token, jira_url string) {
-	client := loginToJira(jira_user, jira_token, jira_url)
+func insertToJiraIfNotExists(record jira.WorklogRecord, jiraUser, jiraToken, jiraUrl string) {
+	client := loginToJira(jiraUser, jiraToken, jiraUrl)
 
 	wl, _, err := client.Issue.GetWorklogs(record.IssueID)
 

@@ -92,11 +92,6 @@ func Test_parseIssues(t *testing.T) {
 					Start:       &t1Start,
 					Stop:        &t1End,
 				},
-				//{
-				//	Description: "foo bar",
-				//	Start:       &t1Start,
-				//	Stop:        &t1End,
-				//},
 			},
 			[]jira.WorklogRecord{
 				{
@@ -144,11 +139,10 @@ func Test_parseIssues(t *testing.T) {
 							t.Errorf("expected is nil")
 							return
 						}
-						//if actual.Started. != expected.Started {
-						//	t.Errorf("started does not match with expected ")
-						//	return
-						//TODO
-						//}
+						if !actual.Started.Equal(*expected.Started) {
+							t.Errorf("started does not match with expected ")
+							return
+						}
 					})
 					t.Run("timeSpent", func(t *testing.T) {
 						if actual.TimeSpent != expected.TimeSpent {
