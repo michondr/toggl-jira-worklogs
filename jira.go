@@ -27,13 +27,13 @@ func insertToJiraIfNotExists(record jira.WorklogRecord, jiraUser, jiraToken, jir
 	wl, _, err := client.Issue.GetWorklogs(record.IssueID)
 
 	if err != nil {
-		fmt.Printf("\nerror getting worklogs: %v\n", err)
+		fmt.Printf("error getting worklogs: %v\n", err)
 		return
 	}
 
 	for _, i := range wl.Worklogs {
 		if i.Started.Equal(*record.Started) && i.TimeSpent == record.TimeSpent {
-			fmt.Printf("\nis duplicate ID: %s, spent %s from %s\n", record.IssueID, record.TimeSpent, time.Time(*record.Started).Format(time.RFC3339))
+			fmt.Printf("is duplicate ID: %s, spent %s from %s\n", record.IssueID, record.TimeSpent, time.Time(*record.Started).Format(time.RFC3339))
 			return
 		}
 
@@ -41,9 +41,9 @@ func insertToJiraIfNotExists(record jira.WorklogRecord, jiraUser, jiraToken, jir
 
 	wlAdded, _, errAdded := client.Issue.AddWorklogRecord(record.IssueID, &record)
 	if errAdded != nil {
-		fmt.Printf("\nerror adding worklog record: %v\n", err)
+		fmt.Printf("error adding worklog record: %v\n", err)
 		return
 	}
 
-	fmt.Printf("\nworklog record (%s, %s) added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s\n", record.IssueID, record.TimeSpent, record.IssueID, wlAdded.ID)
+	fmt.Printf("worklog record (%s, %s) added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s\n", record.IssueID, record.TimeSpent, record.IssueID, wlAdded.ID)
 }

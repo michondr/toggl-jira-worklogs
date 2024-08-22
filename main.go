@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -17,40 +19,40 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	tokenToggl := os.Getenv("TOGGL_TOKEN")
-	if tokenToggl == "" {
-		panic("missing TOGGL_TOKEN")
-	}
+	var (
+		tokenToggl    = os.Getenv("TOGGL_TOKEN")
+		jiraToken     = os.Getenv("JIRA_TOKEN")
+		jiraUser      = os.Getenv("JIRA_USER")
+		jiraUrl       = os.Getenv("JIRA_URL")
+		dateToProcess = flag.String("date", time.Now().Format(time.DateOnly), "date to process")
+		dateTz        = flag.String("tz", "Europe/Prague", "date timezone")
+	)
+	flag.Parse()
 
-	jiraToken := os.Getenv("JIRA_TOKEN")
-	if jiraToken == "" {
-		panic("missing JIRA_TOKEN")
-	}
-	jiraUser := os.Getenv("JIRA_USER")
-	if jiraUser == "" {
-		panic("missing JIRA_USER")
-	}
-	jiraUrl := os.Getenv("JIRA_URL")
-	if jiraUrl == "" {
-		panic("missing JIRA_URL")
-	}
-
-	tz, err := time.LoadLocation("Europe/Prague")
+	tz, err := time.LoadLocation(*dateTz)
 	if err != nil {
 		panic("cannot find tz: " + err.Error())
 	}
+
 	handleIssuesSince := time.Date(2024, 8, 20, 0, 0, 0, 0, tz)
+	forDate, err := time.Parse(time.DateOnly, *dateToProcess)
 
-	forDate := time.Date(2024, 8, 21, 12, 14, 15, 0, tz)
-
+	if err != nil {
+		panic("cannot parse date: " + err.Error())
+	}
 	if forDate.Compare(handleIssuesSince) == -1 {
 		panic("cannot go this far back")
 	}
+
+	forDate = forDate.In(tz)
+	fmt.Printf("processing date %s\n", forDate)
 
 	togglEntries, err := getTogglEntries(tokenToggl, forDate)
 	if err != nil {
 		panic("cannot get time entries: " + err.Error())
 	}
+
+	fmt.Printf("will process %d toggl entries\n", len(togglEntries))
 
 	for _, entry := range parseIssues(togglEntries) {
 
@@ -61,4 +63,5 @@ func main() {
 		insertToJiraIfNotExists(entry, jiraUser, jiraToken, jiraUrl)
 	}
 
+	fmt.Printf("done\n")
 }

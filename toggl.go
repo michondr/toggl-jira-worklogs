@@ -6,7 +6,7 @@ import (
 )
 
 func getTogglEntries(token_toggl string, date_to_run time.Time) ([]toggl.TimeEntry, error) {
-	toggl.EnableLog()
+	toggl.DisableLog()
 	session := toggl.OpenSession(token_toggl)
 
 	start := date_to_run.Truncate(24 * time.Hour)
