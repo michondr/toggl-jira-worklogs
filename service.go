@@ -21,29 +21,29 @@ type togglJiraService struct {
 	jiraClient  jiraClient
 }
 
-func (s *togglJiraService) run(dateToProcess, dateTz *string) {
+func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 	tz, err := time.LoadLocation(*dateTz)
 	if err != nil {
-		panic("cannot find tz: " + err.Error())
+		return fmt.Errorf("cannot find tz: %w", err)
 	}
 
 	sinceDate, _ := time.Parse(time.DateOnly, handleIssuesSince)
 	forDate, err := time.Parse(time.DateOnly, *dateToProcess)
 	if err != nil {
-		panic("cannot parse date: " + err.Error())
+		return fmt.Errorf("cannot parse date: %w", err)
 	}
 
 	sinceDate = sinceDate.In(tz)
 	forDate = forDate.In(tz)
 	if forDate.Compare(sinceDate) == -1 {
-		panic("cannot go this far back")
+		return fmt.Errorf("cannot go this far back")
 	}
 
 	fmt.Printf("processing date %s\n", forDate)
 
 	togglEntries, err := s.getTogglEntries(forDate)
 	if err != nil {
-		panic("cannot get time entries: " + err.Error())
+		return fmt.Errorf("cannot get time entries: %w", err)
 	}
 
 	fmt.Printf("will process %d toggl entries\n", len(togglEntries))
@@ -51,13 +51,15 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) {
 	for _, entry := range s.transformEntries(togglEntries) {
 
 		if time.Time(*entry.Started).Compare(sinceDate) == -1 {
-			panic("really, updating something this far would be bad")
+			return fmt.Errorf("really, updating something this far would be bad. entry %s", entry.ID)
 		}
 
 		s.insertToJiraIfNotExists(entry)
 	}
 
 	fmt.Printf("done\n")
+
+	return nil
 }
 
 func (s *togglJiraService) getTogglEntries(forDate time.Time) ([]toggl.TimeEntry, error) {
