@@ -37,7 +37,9 @@ func main() {
 		jiraClient:  loginToJira(jiraUser, jiraToken, jiraUrl).Issue,
 	}
 
-	service.run(dateToProcess, dateTz)
+	if err := service.run(dateToProcess, dateTz); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func loginToJira(jiraUser, jiraToken, jiraUrl string) *jira.Client {

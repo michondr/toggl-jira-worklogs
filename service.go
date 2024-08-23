@@ -27,14 +27,11 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 		return fmt.Errorf("cannot find tz: %w", err)
 	}
 
-	sinceDate, _ := time.Parse(time.DateOnly, handleIssuesSince)
-	forDate, err := time.Parse(time.DateOnly, *dateToProcess)
+	sinceDate, _ := time.ParseInLocation(time.DateOnly, handleIssuesSince, tz)
+	forDate, err := time.ParseInLocation(time.DateOnly, *dateToProcess, tz)
 	if err != nil {
 		return fmt.Errorf("cannot parse date: %w", err)
 	}
-
-	sinceDate = sinceDate.In(tz)
-	forDate = forDate.In(tz)
 	if forDate.Compare(sinceDate) == -1 {
 		return fmt.Errorf("cannot go this far back")
 	}
