@@ -22,6 +22,4 @@ all records which have some time tracked in that time window will be fetched.
 if the record already exists in jira worklogs it will not be returned
 
 ### things to improve
-* concurrency
-* better logging?
 * more adjustability?

@@ -5,6 +5,7 @@ import (
 	"github.com/andygrunwald/go-jira"
 	"github.com/jason0x43/go-toggl"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -36,14 +37,21 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 		return fmt.Errorf("cannot go this far back")
 	}
 
-	fmt.Printf("processing date %s\n", forDate)
+	start := forDate
+	end := forDate.AddDate(0, 0, 1)
 
-	togglEntries, err := s.getTogglEntries(forDate)
+	fmt.Printf("from  %s\n", start.Format(time.RFC3339))
+	fmt.Printf("until %s\n", end.Format(time.RFC3339))
+
+	togglEntries, err := s.getTogglEntries(start, end)
 	if err != nil {
 		return fmt.Errorf("cannot get time entries: %w", err)
 	}
 
-	fmt.Printf("will process %d toggl entries\n", len(togglEntries))
+	fmt.Printf("will process %d toggl entries\n\n", len(togglEntries))
+
+	insertInfo := make(chan string)
+	var wg sync.WaitGroup
 
 	for _, entry := range s.transformEntries(togglEntries) {
 
@@ -51,18 +59,24 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 			return fmt.Errorf("really, updating something this far would be bad. entry %s", entry.ID)
 		}
 
-		s.insertToJiraIfNotExists(entry)
+		wg.Add(1)
+		go s.insertToJiraIfNotExists(entry, &wg, insertInfo)
 	}
 
-	fmt.Printf("done\n")
+	go func() {
+		wg.Wait()
+		close(insertInfo)
+	}()
+
+	for msg := range insertInfo {
+		fmt.Println(msg)
+	}
+	fmt.Println("done")
 
 	return nil
 }
 
-func (s *togglJiraService) getTogglEntries(forDate time.Time) ([]toggl.TimeEntry, error) {
-	start := forDate.Truncate(24 * time.Hour)
-	end := start.Add(24 * time.Hour)
-
+func (s *togglJiraService) getTogglEntries(start, end time.Time) ([]toggl.TimeEntry, error) {
 	return s.togglClient.GetTimeEntries(start, end)
 }
 
@@ -70,17 +84,24 @@ func (s *togglJiraService) transformEntries(togglEntries []toggl.TimeEntry) []ji
 	return parseIssues(togglEntries)
 }
 
-func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord) {
+func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg *sync.WaitGroup, insertInfo chan<- string) {
+	defer wg.Done()
+
 	wl, _, err := s.jiraClient.GetWorklogs(record.IssueID)
 
 	if err != nil {
-		fmt.Printf("error getting worklogs: %v\n", err)
+		insertInfo <- fmt.Sprintf("error getting worklogs: %v", err)
 		return
 	}
 
 	for _, i := range wl.Worklogs {
 		if i.Started.Equal(*record.Started) && i.TimeSpent == record.TimeSpent {
-			fmt.Printf("is duplicate ID: %s, spent %s from %s\n", record.IssueID, record.TimeSpent, time.Time(*record.Started).Format(time.RFC3339))
+			insertInfo <- fmt.Sprintf(
+				"is duplicate ID: %s, spent %s from %s (of %s)",
+				record.IssueID,
+				record.TimeSpent,
+				time.Time(*record.Started).Format(time.RFC3339),
+				fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID))
 			return
 		}
 
@@ -88,9 +109,9 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord) {
 
 	wlAdded, _, errAdded := s.jiraClient.AddWorklogRecord(record.IssueID, &record)
 	if errAdded != nil {
-		fmt.Printf("error adding worklog record: %v\n", err)
+		insertInfo <- fmt.Sprintf("error adding worklog record: %v\n", err)
 		return
 	}
 
-	fmt.Printf("worklog record (%s, %s) added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s\n", record.IssueID, record.TimeSpent, record.IssueID, wlAdded.ID)
+	insertInfo <- fmt.Sprintf("worklog record (%s, %s) added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, record.TimeSpent, record.IssueID, wlAdded.ID)
 }
