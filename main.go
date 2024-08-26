@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/andygrunwald/go-jira"
+	"github.com/jason0x43/go-toggl"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -10,7 +12,8 @@ import (
 )
 
 const (
-	jiraScrumId = "REC-3123"
+	jiraScrumId       = "REC-3123"
+	handleIssuesSince = "2024-08-20"
 )
 
 func main() {
@@ -29,39 +32,33 @@ func main() {
 	)
 	flag.Parse()
 
-	tz, err := time.LoadLocation(*dateTz)
+	service := togglJiraService{
+		togglClient: loginToToggl(tokenToggl),
+		jiraClient:  loginToJira(jiraUser, jiraToken, jiraUrl).Issue,
+	}
+
+	if err := service.run(dateToProcess, dateTz); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func loginToJira(jiraUser, jiraToken, jiraUrl string) *jira.Client {
+	tp := jira.BasicAuthTransport{
+		Username: jiraUser,
+		Password: jiraToken,
+	}
+
+	client, err := jira.NewClient(tp.Client(), jiraUrl)
 	if err != nil {
-		panic("cannot find tz: " + err.Error())
+		fmt.Printf("\nerror client: %v\n", err)
+		return nil
 	}
 
-	handleIssuesSince := time.Date(2024, 8, 20, 0, 0, 0, 0, tz)
-	forDate, err := time.Parse(time.DateOnly, *dateToProcess)
+	return client
+}
 
-	if err != nil {
-		panic("cannot parse date: " + err.Error())
-	}
-	if forDate.Compare(handleIssuesSince) == -1 {
-		panic("cannot go this far back")
-	}
+func loginToToggl(tokenToggl string) *toggl.Session {
+	ses := toggl.OpenSession(tokenToggl)
 
-	forDate = forDate.In(tz)
-	fmt.Printf("processing date %s\n", forDate)
-
-	togglEntries, err := getTogglEntries(tokenToggl, forDate)
-	if err != nil {
-		panic("cannot get time entries: " + err.Error())
-	}
-
-	fmt.Printf("will process %d toggl entries\n", len(togglEntries))
-
-	for _, entry := range parseIssues(togglEntries) {
-
-		if time.Time(*entry.Started).Compare(handleIssuesSince) == -1 {
-			panic("really, updating something this far would be bad")
-		}
-
-		insertToJiraIfNotExists(entry, jiraUser, jiraToken, jiraUrl)
-	}
-
-	fmt.Printf("done\n")
+	return &ses
 }

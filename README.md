@@ -22,7 +22,4 @@ all records which have some time tracked in that time window will be fetched.
 if the record already exists in jira worklogs it will not be returned
 
 ### things to improve
-* concurrency
-* make it more tested. now its only the parsing from toggl entry to jira entry
-* better logging?
 * more adjustability?

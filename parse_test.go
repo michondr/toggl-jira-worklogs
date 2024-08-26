@@ -40,7 +40,7 @@ func Test_parseIssues(t *testing.T) {
 					IssueID:   jiraScrumId,
 					Comment:   "SU",
 					Started:   &t1Jira,
-					TimeSpent: "0h 30m",
+					TimeSpent: "30m",
 				}, {
 					IssueID:   jiraScrumId,
 					Comment:   "SU",
@@ -63,7 +63,7 @@ func Test_parseIssues(t *testing.T) {
 					IssueID:   "REC-1234",
 					Comment:   "some feature name",
 					Started:   &t1Jira,
-					TimeSpent: "0h 30m",
+					TimeSpent: "30m",
 				},
 			},
 		},
@@ -81,7 +81,7 @@ func Test_parseIssues(t *testing.T) {
 					IssueID:   "REC-1234",
 					Comment:   "code review",
 					Started:   &t1Jira,
-					TimeSpent: "0h 30m",
+					TimeSpent: "30m",
 				},
 			},
 		}, {
@@ -98,7 +98,7 @@ func Test_parseIssues(t *testing.T) {
 					IssueID:   jiraScrumId,
 					Comment:   "foo bar",
 					Started:   &t1Jira,
-					TimeSpent: "0h 30m",
+					TimeSpent: "30m",
 				},
 			},
 		},
@@ -171,7 +171,7 @@ func Test_timeToTimeSpent(t *testing.T) {
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 20, 8, 0, 1, 0, time.UTC),
 			},
-			want: "0h 0m",
+			want: "0m",
 		},
 		{
 			name: "1 minute 0 second",
@@ -179,7 +179,7 @@ func Test_timeToTimeSpent(t *testing.T) {
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 20, 8, 1, 0, 0, time.UTC),
 			},
-			want: "0h 1m",
+			want: "1m",
 		},
 		{
 			name: "1 minute 1 second",
@@ -187,7 +187,7 @@ func Test_timeToTimeSpent(t *testing.T) {
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 20, 8, 1, 1, 0, time.UTC),
 			},
-			want: "0h 1m",
+			want: "1m",
 		},
 		{
 			name: "1 hour 1 minute 1 second",
