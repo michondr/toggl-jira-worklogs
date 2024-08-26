@@ -48,7 +48,7 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 		return fmt.Errorf("cannot get time entries: %w", err)
 	}
 
-	fmt.Printf("will process %d toggl entries\n\n", len(togglEntries))
+	fmt.Printf("\nwill process %d toggl entries\n\n", len(togglEntries))
 	fmt.Printf("Issue ID\tTime\t\n")
 
 	insertInfo := make(chan string)

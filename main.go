@@ -59,6 +59,7 @@ func loginToJira(jiraUser, jiraToken, jiraUrl string) *jira.Client {
 
 func loginToToggl(tokenToggl string) *toggl.Session {
 	ses := toggl.OpenSession(tokenToggl)
+	toggl.DisableLog()
 
 	return &ses
 }
