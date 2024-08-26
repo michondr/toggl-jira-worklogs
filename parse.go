@@ -48,5 +48,9 @@ func timeToTimeSpent(d time.Duration) string {
 	hour := int(d.Hours())
 	minute := int(d.Minutes()) % 60
 
-	return fmt.Sprintf("%dh %dm", hour, minute)
+	if hour > 0 {
+		return fmt.Sprintf("%dh %dm", hour, minute)
+	}
+
+	return fmt.Sprintf("%dm", minute)
 }

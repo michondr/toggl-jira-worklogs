@@ -49,6 +49,7 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 	}
 
 	fmt.Printf("will process %d toggl entries\n\n", len(togglEntries))
+	fmt.Printf("Issue ID\tTime\t\n")
 
 	insertInfo := make(chan string)
 	var wg sync.WaitGroup
@@ -71,7 +72,6 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 	for msg := range insertInfo {
 		fmt.Println(msg)
 	}
-	fmt.Println("done")
 
 	return nil
 }
@@ -86,22 +86,20 @@ func (s *togglJiraService) transformEntries(togglEntries []toggl.TimeEntry) []ji
 
 func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg *sync.WaitGroup, insertInfo chan<- string) {
 	defer wg.Done()
+	msg := fmt.Sprintf("%s\t%s\t", record.IssueID, record.TimeSpent)
 
 	wl, _, err := s.jiraClient.GetWorklogs(record.IssueID)
 
 	if err != nil {
-		insertInfo <- fmt.Sprintf("error getting worklogs: %v", err)
+		insertInfo <- fmt.Sprintf("%s error getting worklogs: %v", msg, err)
 		return
 	}
 
 	for _, i := range wl.Worklogs {
 		if i.Started.Equal(*record.Started) && i.TimeSpent == record.TimeSpent {
-			insertInfo <- fmt.Sprintf(
-				"is duplicate ID: %s, spent %s from %s (of %s)",
-				record.IssueID,
-				record.TimeSpent,
-				time.Time(*record.Started).Format(time.RFC3339),
-				fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID))
+			existing := fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID)
+
+			insertInfo <- fmt.Sprintf("%s duplicate of %s", msg, existing)
 			return
 		}
 
@@ -113,5 +111,5 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 		return
 	}
 
-	insertInfo <- fmt.Sprintf("worklog record (%s, %s) added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, record.TimeSpent, record.IssueID, wlAdded.ID)
+	insertInfo <- fmt.Sprintf("%s added: https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", msg, record.IssueID, wlAdded.ID)
 }
