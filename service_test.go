@@ -82,7 +82,7 @@ func Test_togglJiraService_run(t *testing.T) {
 				recordsJiraExpects: []jira.WorklogRecord{
 					{
 						Started:   &t1StartJira,
-						TimeSpent: "1h 0m",
+						TimeSpent: "1h",
 						IssueID:   "REC-5085",
 						Comment:   "Nové UI kalendáře - migrace dat",
 					},

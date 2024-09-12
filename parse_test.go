@@ -171,7 +171,7 @@ func Test_timeToTimeSpent(t *testing.T) {
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 20, 8, 0, 1, 0, time.UTC),
 			},
-			want: "0m",
+			want: "0h",
 		},
 		{
 			name: "1 minute 0 second",
