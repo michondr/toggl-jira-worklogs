@@ -35,6 +35,7 @@ func main() {
 	service := togglJiraService{
 		togglClient: loginToToggl(tokenToggl),
 		jiraClient:  loginToJira(jiraUser, jiraToken, jiraUrl).Issue,
+		jiraUser:    jiraUser,
 	}
 
 	if err := service.run(dateToProcess, dateTz); err != nil {

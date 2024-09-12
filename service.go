@@ -20,6 +20,7 @@ type jiraClient interface {
 type togglJiraService struct {
 	togglClient togglClient
 	jiraClient  jiraClient
+	jiraUser    string
 }
 
 func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
@@ -96,6 +97,10 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 	}
 
 	for _, i := range wl.Worklogs {
+		if i.Author.EmailAddress != s.jiraUser {
+			continue
+		}
+
 		if i.Started.Equal(*record.Started) && i.TimeSpent == record.TimeSpent {
 			existing := fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID)
 
