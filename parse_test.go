@@ -198,12 +198,20 @@ func Test_timeToTimeSpent(t *testing.T) {
 			want: "1h 1m",
 		},
 		{
+			name: "10 hour 1 minute 1 second",
+			args: args{
+				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
+				to:   time.Date(2024, 8, 20, 18, 15, 0, 0, time.UTC),
+			},
+			want: "1d 2h 15m",
+		},
+		{
 			name: "1 day 1 hour 1 minute 1 second",
 			args: args{
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 21, 9, 1, 1, 0, time.UTC),
 			},
-			want: "25h 1m",
+			want: "3d 1h 1m",
 		},
 	}
 	for _, tt := range tests {
