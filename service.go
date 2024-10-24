@@ -41,8 +41,10 @@ func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
 	start := forDate
 	end := forDate.AddDate(0, 0, 1)
 
-	fmt.Printf("from  %s\n", start.Format(time.RFC3339))
-	fmt.Printf("until %s\n", end.Format(time.RFC3339))
+	fmt.Printf("_______________________________________________\n")
+	fmt.Printf("now\t%s\n", time.Now().Format(time.RFC3339))
+	fmt.Printf("from\t%s\n", start.Format(time.RFC3339))
+	fmt.Printf("until\t%s\n", end.Format(time.RFC3339))
 
 	togglEntries, err := s.getTogglEntries(start, end)
 	if err != nil {
