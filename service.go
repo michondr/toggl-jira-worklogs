@@ -23,24 +23,7 @@ type togglJiraService struct {
 	jiraUser    string
 }
 
-func (s *togglJiraService) run(dateToProcess, dateTz *string) error {
-	tz, err := time.LoadLocation(*dateTz)
-	if err != nil {
-		return fmt.Errorf("cannot find tz: %w", err)
-	}
-
-	sinceDate, _ := time.ParseInLocation(time.DateOnly, handleIssuesSince, tz)
-	forDate, err := time.ParseInLocation(time.DateOnly, *dateToProcess, tz)
-	if err != nil {
-		return fmt.Errorf("cannot parse date: %w", err)
-	}
-	if forDate.Compare(sinceDate) == -1 {
-		return fmt.Errorf("cannot go this far back")
-	}
-
-	start := forDate
-	end := forDate.AddDate(0, 0, 1)
-
+func (s *togglJiraService) run(start, end, sinceDate time.Time) error {
 	fmt.Printf("_______________________________________________\n")
 	fmt.Printf("now\t%s\n", time.Now().Format(time.RFC3339))
 	fmt.Printf("from\t%s\n", start.Format(time.RFC3339))

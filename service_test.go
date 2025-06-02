@@ -15,13 +15,13 @@ func Test_togglJiraService_run(t *testing.T) {
 		recordsJiraExpects  []jira.WorklogRecord
 	}
 	type args struct {
-		dateToProcess *string
-		dateTz        *string
+		dateFrom     time.Time
+		dateUntil    time.Time
+		dateMinSince time.Time
 	}
 
-	tz := "Europe/Prague"
-	invalidDate := "2024-08-19"
-	validDate := "2024-08-21"
+	dateMinSince, _ := time.Parse(time.RFC3339, "2023-08-21T06:15:00+00:00")
+	invalidDate, _ := time.Parse(time.RFC3339, "2024-08-19")
 	t1Start, _ := time.Parse(time.RFC3339, "2024-08-21T06:15:00+00:00")
 	t1StartJira := jira.Time(t1Start)
 	t1End, _ := time.Parse(time.RFC3339, "2024-08-21T07:15:00+00:00")
@@ -43,8 +43,9 @@ func Test_togglJiraService_run(t *testing.T) {
 				recordsJiraExpects:  []jira.WorklogRecord{},
 			},
 			args{
-				&invalidDate,
-				&tz,
+				invalidDate,
+				invalidDate,
+				invalidDate,
 			},
 			errors.New("cannot go this far back"),
 		},
@@ -95,8 +96,9 @@ func Test_togglJiraService_run(t *testing.T) {
 				},
 			},
 			args{
-				&validDate,
-				&tz,
+				t1Start,
+				t1End,
+				dateMinSince,
 			},
 			nil,
 		},
@@ -112,11 +114,15 @@ func Test_togglJiraService_run(t *testing.T) {
 					tt.fields.recordsJiraExpects,
 				},
 			}
-			actualErr := s.run(tt.args.dateToProcess, tt.args.dateTz)
+			actualErr := s.run(
+				tt.args.dateFrom,
+				tt.args.dateUntil,
+				tt.args.dateMinSince,
+			)
 
 			if tt.expectedErr == nil && actualErr != nil {
 				t.Errorf("togglJiraService.run() error = %v, wantErr nil", actualErr)
-			} else if tt.expectedErr != nil && tt.expectedErr.Error() != actualErr.Error() {
+			} else if tt.expectedErr != nil && actualErr != nil && tt.expectedErr.Error() != actualErr.Error() {
 				t.Errorf("togglJiraService.run() error = %v, wantErr %v", actualErr, tt.expectedErr)
 			}
 		})

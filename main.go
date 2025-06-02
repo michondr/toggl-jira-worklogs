@@ -22,13 +22,17 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	defaultToday := time.Now()
+	defaultTomorrow := defaultToday.AddDate(0, 0, 1)
+
 	var (
-		tokenToggl    = os.Getenv("TOGGL_TOKEN")
-		jiraToken     = os.Getenv("JIRA_TOKEN")
-		jiraUser      = os.Getenv("JIRA_USER")
-		jiraUrl       = os.Getenv("JIRA_URL")
-		dateToProcess = flag.String("date", time.Now().Format(time.DateOnly), "date to process")
-		dateTz        = flag.String("tz", "Europe/Prague", "date timezone")
+		tokenToggl = os.Getenv("TOGGL_TOKEN")
+		jiraToken  = os.Getenv("JIRA_TOKEN")
+		jiraUser   = os.Getenv("JIRA_USER")
+		jiraUrl    = os.Getenv("JIRA_URL")
+		dateFrom   = flag.String("from", defaultToday.Format(time.DateOnly), "from date, default to today")
+		dateTo     = flag.String("to", defaultTomorrow.Format(time.DateOnly), "to date, default to tomorrow")
+		dateTz     = flag.String("tz", "Europe/Prague", "date timezone")
 	)
 	flag.Parse()
 
@@ -38,7 +42,25 @@ func main() {
 		jiraUser:    jiraUser,
 	}
 
-	if err := service.run(dateToProcess, dateTz); err != nil {
+	tz, err := time.LoadLocation(*dateTz)
+	if err != nil {
+		panic("cannot find tz")
+	}
+	start, err := time.ParseInLocation(time.DateOnly, *dateFrom, tz)
+	if err != nil {
+		panic("cannot parse from date")
+	}
+	end, err := time.ParseInLocation(time.DateOnly, *dateTo, tz)
+	if err != nil {
+		panic("cannot parse to date")
+	}
+	sinceDate, _ := time.ParseInLocation(time.DateOnly, handleIssuesSince, tz)
+
+	if start.Compare(sinceDate) == -1 {
+		panic("cannot go this far back")
+	}
+
+	if err := service.run(start, end, sinceDate); err != nil {
 		log.Fatal(err)
 	}
 }
