@@ -229,6 +229,14 @@ func Test_timeToTimeSpent(t *testing.T) {
 			},
 			want: "1d 1h",
 		},
+		{
+			name: "1h instead of 1h 0m ",
+			args: args{
+				from: time.Date(2025, 6, 6, 12, 15, 0, 0, time.UTC),
+				to:   time.Date(2025, 6, 6, 13, 15, 0, 0, time.UTC),
+			},
+			want: "1h",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
