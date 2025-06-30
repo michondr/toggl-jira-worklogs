@@ -86,10 +86,15 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 			continue
 		}
 
-		if i.Started.Equal(*record.Started) && i.TimeSpent == record.TimeSpent {
-			existing := fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID)
+		if i.Started.Equal(*record.Started) {
+			if i.TimeSpent == record.TimeSpent {
+				existing := fmt.Sprintf("https://recruitis.atlassian.net/browse/%s?focusedWorklogId=%s", record.IssueID, i.ID)
 
-			insertInfo <- fmt.Sprintf("%s duplicate of %s", msg, existing)
+				insertInfo <- fmt.Sprintf("%s duplicate of %s", msg, existing)
+				return
+			}
+
+			insertInfo <- fmt.Sprintf("%s started at the same time %s, but time in toggl: %s and time in jira: %s", msg, time.Time(*record.Started).Format(time.RFC3339), record.TimeSpent, i.TimeSpent)
 			return
 		}
 

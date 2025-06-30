@@ -171,7 +171,15 @@ func Test_timeToTimeSpent(t *testing.T) {
 				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
 				to:   time.Date(2024, 8, 20, 8, 0, 1, 0, time.UTC),
 			},
-			want: "0h",
+			want: "0m",
+		},
+		{
+			name: "59 second",
+			args: args{
+				from: time.Date(2024, 8, 20, 8, 0, 0, 0, time.UTC),
+				to:   time.Date(2024, 8, 20, 8, 0, 59, 0, time.UTC),
+			},
+			want: "0m",
 		},
 		{
 			name: "1 minute 0 second",
@@ -212,6 +220,14 @@ func Test_timeToTimeSpent(t *testing.T) {
 				to:   time.Date(2024, 8, 21, 9, 1, 1, 0, time.UTC),
 			},
 			want: "3d 1h 1m",
+		},
+		{
+			name: "1d 1h",
+			args: args{
+				from: time.Date(2025, 6, 6, 12, 15, 0, 0, time.UTC),
+				to:   time.Date(2025, 6, 6, 21, 15, 1, 0, time.UTC),
+			},
+			want: "1d 1h",
 		},
 	}
 	for _, tt := range tests {

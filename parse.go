@@ -48,13 +48,13 @@ func timeToTimeSpent(d time.Duration) string {
 	hour := int(d.Hours())
 	minute := int(d.Minutes()) % 60
 
-	if minute == 0 {
-		return fmt.Sprintf("%dh", hour)
-	}
-
 	if hour > 8 {
 		days := hour / 8
 		hours := hour % 8
+
+		if minute == 0 {
+			return fmt.Sprintf("%dd %dh", days, hours)
+		}
 		return fmt.Sprintf("%dd %dh %dm", days, hours, minute)
 	}
 
