@@ -15,6 +15,11 @@ run
 ./toggl-jira-worklogs -h
 ```
 
+or without build
+```shell
+go run . -from 2025-01-01 -to 2025-02-01
+```
+
 command runs by default with current day and fetches records from toggl from start to end of that day. 
 
 all records which have some time tracked in that time window will be fetched.
@@ -41,6 +46,3 @@ FF-3123   4h 30m  added: https://fc.atlassian.net/browse/FF-3123?focusedWorklogI
 FF-3123   45m	  added: https://fc.atlassian.net/browse/FF-3123?focusedWorklogId=942
 
 ```
-
-### things to improve
-* more adjustability?

@@ -3,17 +3,20 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/andygrunwald/go-jira"
-	"github.com/jason0x43/go-toggl"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"time"
+
+	"github.com/andygrunwald/go-jira"
+	"github.com/getsentry/sentry-go"
+	"github.com/jason0x43/go-toggl"
+	"github.com/joho/godotenv"
 )
 
 const (
 	jiraScrumId       = "REC-3123"
 	handleIssuesSince = "2024-08-20"
+	sentryCronSlug    = "insert-to-jira"
 )
 
 func main() {
@@ -26,15 +29,24 @@ func main() {
 	defaultTomorrow := defaultToday.AddDate(0, 0, 1)
 
 	var (
-		tokenToggl = os.Getenv("TOGGL_TOKEN")
-		jiraToken  = os.Getenv("JIRA_TOKEN")
-		jiraUser   = os.Getenv("JIRA_USER")
-		jiraUrl    = os.Getenv("JIRA_URL")
-		dateFrom   = flag.String("from", defaultToday.Format(time.DateOnly), "from date, default to today")
-		dateTo     = flag.String("to", defaultTomorrow.Format(time.DateOnly), "to date, default to tomorrow")
-		dateTz     = flag.String("tz", "Europe/Prague", "date timezone")
+		tokenToggl           = os.Getenv("TOGGL_TOKEN")
+		jiraToken            = os.Getenv("JIRA_TOKEN")
+		jiraUser             = os.Getenv("JIRA_USER")
+		jiraUrl              = os.Getenv("JIRA_URL")
+		sentryDsn            = os.Getenv("SENTRY_DSN")
+		expectedCronSchedule = os.Getenv("EXPECTED_CRON_SCHEDULE")
+		dateFrom             = flag.String("from", defaultToday.Format(time.DateOnly), "from date, default to today")
+		dateTo               = flag.String("to", defaultTomorrow.Format(time.DateOnly), "to date, default to tomorrow")
+		dateTz               = flag.String("tz", "Europe/Prague", "date timezone")
 	)
 	flag.Parse()
+
+	monitorConfig, cronId, err := initSentry(sentryDsn, expectedCronSchedule)
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
+	}
+
+	defer sentry.Flush(2 * time.Second)
 
 	service := togglJiraService{
 		togglClient: loginToToggl(tokenToggl),
@@ -63,6 +75,57 @@ func main() {
 	if err := service.run(start, end, sinceDate); err != nil {
 		log.Fatal(err)
 	}
+
+	sentry.CaptureCheckIn(
+		&sentry.CheckIn{
+			ID:          *cronId,
+			MonitorSlug: sentryCronSlug,
+			Status:      sentry.CheckInStatusOK,
+		},
+		monitorConfig,
+	)
+}
+
+func initSentry(sentryDsn, expectedCronSchedule string) (*sentry.MonitorConfig, *sentry.EventID, error) {
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: sentryDsn,
+		//EnableLogs: true,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sentry.CaptureMessage("It works!")
+
+	monitorSchedule := sentry.CrontabSchedule(expectedCronSchedule)
+
+	// Create a monitor config object
+	monitorConfig := &sentry.MonitorConfig{
+		Schedule:      monitorSchedule,
+		MaxRuntime:    2,
+		CheckInMargin: 1,
+	}
+
+	// 🟡 Notify Sentry your job is running:
+	checkinId := sentry.CaptureCheckIn(
+		&sentry.CheckIn{
+			MonitorSlug: sentryCronSlug,
+			Status:      sentry.CheckInStatusInProgress,
+		},
+		monitorConfig,
+	)
+	//
+	//// The SentryLogger requires context, to link logs with the appropriate traces. You can either create a new logger
+	//// by providing the context, or use WithCtx() to pass the context inline.
+	//ctx := context.Background()
+	//logger := sentry.NewLogger(ctx)
+	//
+	//// You can use the logger like [fmt.Print]
+	//logger.Info().Emit("Hello ", "world!")
+	//// Or like [fmt.Printf]
+	//logger.Info().Emitf("Hello %v!", "world")
+
+	return monitorConfig, checkinId, nil
 }
 
 func loginToJira(jiraUser, jiraToken, jiraUrl string) *jira.Client {
