@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/andygrunwald/go-jira"
-	"github.com/jason0x43/go-toggl"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/andygrunwald/go-jira"
+	"github.com/getsentry/sentry-go"
+	"github.com/jason0x43/go-toggl"
 )
 
 type togglClient interface {
@@ -77,6 +79,7 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 	wl, _, err := s.jiraClient.GetWorklogs(record.IssueID)
 
 	if err != nil {
+		sentry.CaptureException(err)
 		insertInfo <- fmt.Sprintf("%s error getting worklogs: %v", msg, err)
 		return
 	}
@@ -94,7 +97,10 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 				return
 			}
 
-			insertInfo <- fmt.Sprintf("%s started at the same time %s, but time in toggl: %s and time in jira: %s", msg, time.Time(*record.Started).Format(time.RFC3339), record.TimeSpent, i.TimeSpent)
+			message := fmt.Sprintf("%s started at the same time %s, but time in toggl: %s and time in jira: %s", msg, time.Time(*record.Started).Format(time.RFC3339), record.TimeSpent, i.TimeSpent)
+			sentry.CaptureMessage(message)
+
+			insertInfo <- message
 			return
 		}
 
@@ -102,6 +108,8 @@ func (s *togglJiraService) insertToJiraIfNotExists(record jira.WorklogRecord, wg
 
 	wlAdded, _, errAdded := s.jiraClient.AddWorklogRecord(record.IssueID, &record)
 	if errAdded != nil {
+		sentry.CaptureException(errAdded)
+
 		insertInfo <- fmt.Sprintf("error adding worklog record: %v\n", err)
 		return
 	}

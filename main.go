@@ -95,8 +95,6 @@ func initSentry(sentryDsn, expectedCronSchedule string) (*sentry.MonitorConfig, 
 		return nil, nil, err
 	}
 
-	sentry.CaptureMessage("It works!")
-
 	monitorSchedule := sentry.CrontabSchedule(expectedCronSchedule)
 
 	// Create a monitor config object
