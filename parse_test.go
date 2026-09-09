@@ -85,6 +85,40 @@ func Test_parseIssues(t *testing.T) {
 				},
 			},
 		}, {
+			"feature ticket 5 digits",
+			[]toggl.TimeEntry{
+				{
+					Description: "REC-12345 - some feature name",
+					Start:       &t1Start,
+					Stop:        &t1End,
+				},
+			},
+			[]jira.WorklogRecord{
+				{
+					IssueID:   "REC-12345",
+					Comment:   "some feature name",
+					Started:   &t1Jira,
+					TimeSpent: "30m",
+				},
+			},
+		}, {
+			"cr ticket 5 digits",
+			[]toggl.TimeEntry{
+				{
+					Description: "REC-12345",
+					Start:       &t1Start,
+					Stop:        &t1End,
+				},
+			},
+			[]jira.WorklogRecord{
+				{
+					IssueID:   "REC-12345",
+					Comment:   "code review",
+					Started:   &t1Jira,
+					TimeSpent: "30m",
+				},
+			},
+		}, {
 			"other",
 			[]toggl.TimeEntry{
 				{

@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"github.com/andygrunwald/go-jira"
 	"github.com/jason0x43/go-toggl"
+	"regexp"
 	"strings"
 	"time"
 )
+
+var recIssueRegex = regexp.MustCompile(`^REC-\d+`)
 
 func parseIssues(togglEntries []toggl.TimeEntry) []jira.WorklogRecord {
 	worklogRecords := make([]jira.WorklogRecord, len(togglEntries))
@@ -14,14 +17,14 @@ func parseIssues(togglEntries []toggl.TimeEntry) []jira.WorklogRecord {
 	for key, entry := range togglEntries {
 		started := jira.Time(*entry.Start)
 
-		if isREC := strings.HasPrefix(entry.Description, "REC-"); isREC {
+		if issueID := recIssueRegex.FindString(entry.Description); issueID != "" {
 			descr := "code review"
-			if hasDescription := len(entry.Description) > 8; hasDescription {
-				descr = entry.Description[11:]
+			if rest := strings.TrimPrefix(entry.Description, issueID); strings.HasPrefix(rest, " - ") {
+				descr = rest[3:]
 			}
 
 			worklogRecords[key] = jira.WorklogRecord{
-				IssueID:   entry.Description[:8],
+				IssueID:   issueID,
 				Comment:   descr,
 				Started:   &started,
 				TimeSpent: timeToTimeSpent(entry.Stop.Sub(*entry.Start)),
